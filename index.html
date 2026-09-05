@@ -186,7 +186,8 @@
     <div style="display: flex; gap: 12px;">
       <button onclick="exportData()" class="btn" style="flex: 1; margin: 0; background: linear-gradient(135deg, #f43f5e, #fb7185); color: #fff; box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);">📥 Xuất Dữ Liệu</button>
       <button onclick="document.getElementById('importFile').click()" class="btn btn-outline" style="flex: 1; margin: 0;">📤 Khôi Phục</button>
-      <input type="file" id="importFile" style="display:none" onchange="importData(event)" accept=".json">
+      <!-- Cập nhật cho phép cả .json và .txt -->
+      <input type="file" id="importFile" style="display:none" onchange="importData(event)" accept=".json,.txt">
     </div>
   </div>
 
@@ -526,12 +527,13 @@
       try {
         const dataStr = JSON.stringify(logs, null, 2);
         const safeDate = getTodayString().replace(/-/g, '');
-        const fileName = `Run5AM_Backup_${safeDate}.json`;
+        // Đã đổi thành file .txt
+        const fileName = `Run5AM_Backup_${safeDate}.txt`;
 
-        const blob = new Blob([dataStr], { type: 'text/plain' });
+        const file = new File([dataStr], fileName, { type: 'text/plain' });
 
         const fallbackDownload = () => {
-          const url = URL.createObjectURL(blob);
+          const url = URL.createObjectURL(file);
           const downloadAnchor = document.createElement('a');
           downloadAnchor.href = url;
           downloadAnchor.download = fileName;
@@ -539,31 +541,24 @@
           downloadAnchor.click();
           document.body.removeChild(downloadAnchor);
           URL.revokeObjectURL(url);
-          alert('Đã tải file sao lưu về máy! Bạn có thể vào thư mục Tải xuống để tự gửi lên Drive/Zalo.');
+          alert('Không thể gọi trình chia sẻ. Đã tải trực tiếp file về điện thoại (Thư mục Tải xuống/Downloads).');
         };
 
-        if (navigator.canShare) {
-          const file = new File([blob], fileName, { type: 'text/plain' });
-          if (navigator.canShare({ files: [file] })) {
-            try {
-              await navigator.share({
-                files: [file],
-                title: 'Sao lưu Run 5AM',
-                text: 'Nhật ký chạy bộ 5h sáng của tôi'
-              });
-              return; 
-            } catch (error) {
-              console.log('Chia sẻ bị hủy hoặc lỗi:', error);
-              fallbackDownload();
-            }
-          } else {
-             fallbackDownload();
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Sao lưu Run 5AM',
+              text: 'Dữ liệu nhật ký chạy bộ 5h sáng.'
+            });
+          } catch (error) {
+            console.log('Đã hủy thao tác chia sẻ.');
           }
         } else {
           fallbackDownload();
         }
       } catch (error) {
-        console.error('Lỗi hệ thống:', error);
+        console.error('Lỗi xuất dữ liệu:', error);
       }
     }
 
@@ -580,7 +575,7 @@
             updateUI();
             alert('Đã khôi phục dữ liệu thành công!');
           }
-        } catch (err) { alert('File sao lưu không hợp lệ!'); }
+        } catch (err) { alert('File sao lưu không hợp lệ hoặc đã bị hỏng!'); }
       };
       reader.readAsText(file);
     }
