@@ -518,18 +518,44 @@
         const fileName = `Run5AM_Backup_${safeDate}.json`;
 
         const blob = new Blob([dataStr], { type: 'application/json' });
+        const file = new File([blob], fileName, { type: 'application/json' });
 
-        if (navigator.canShare && navigator.share) {
-          const file = new File([blob], fileName, { type: 'application/json' });
-          if (navigator.canShare({ files: [file] })) {
+        // Phương án B: Hàm tải file trực tiếp về máy
+        const fallbackDownload = () => {
+          const url = URL.createObjectURL(blob);
+          const downloadAnchor = document.createElement('a');
+          downloadAnchor.href = url;
+          downloadAnchor.download = fileName;
+          document.body.appendChild(downloadAnchor);
+          downloadAnchor.click();
+          document.body.removeChild(downloadAnchor);
+          URL.revokeObjectURL(url);
+          alert('Đã tải file sao lưu về máy (Vui lòng kiểm tra thư mục Tải xuống)!');
+        };
+
+        // Phương án A: Thử gọi menu chia sẻ của điện thoại (Drive/Zalo)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
             await navigator.share({
               files: [file],
               title: 'Sao lưu Run 5AM',
               text: 'Dữ liệu sao lưu chạy bộ 5h sáng'
             });
-            return;
+            // Nếu người dùng chọn chia sẻ thành công thì kết thúc tại đây
+            return; 
+          } catch (error) {
+            // Nếu người dùng bấm Hủy hoặc trình duyệt lỗi -> Chuyển sang tải về máy
+            console.log('Chia sẻ bị hủy hoặc lỗi:', error);
+            fallbackDownload();
           }
+        } else {
+          // Trình duyệt hoàn toàn không hỗ trợ Chia sẻ File -> Chuyển sang tải về máy
+          fallbackDownload();
         }
+      } catch (error) {
+        console.error('Lỗi hệ thống:', error);
+      }
+    }
 
         const url = URL.createObjectURL(blob);
         const downloadAnchor = document.createElement('a');
