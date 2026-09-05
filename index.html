@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nhật Ký Chạy Bộ 5h Sáng</title>
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Run 5AM">
+  <meta name="theme-color" content="#0b1121">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b1121; 
+      --card-bg: #151e2f; 
+      --card-border: #233045; 
+      --primary: #00e676; 
+      --primary-gradient: linear-gradient(135deg, #00e676, #1de9b6);
+      --accent: #f59e0b; 
+      --text: #f8fafc; 
+      --text-sub: #94a3b8; 
+      --radius: 16px; 
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); padding: 16px; padding-bottom: 40px; max-width: 500px; margin: 0 auto; }
+    
+    header { text-align: center; padding: 16px 0 24px; }
+    header h1 { 
+      font-size: 1.8rem; 
+      font-weight: 900; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 10px;
+      background: linear-gradient(to right, #00e676, #40c9ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.5px;
+    }
+    header p { color: var(--text-sub); font-size: 0.85rem; margin-top: 6px; }
+    
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .stat-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 14px 8px; text-align: center; box-shadow: inset 0 2px 4px rgba(255,255,255,0.02); }
+    .stat-val { font-size: 1.5rem; font-weight: 900; color: var(--accent); }
+    .stat-lbl { font-size: 0.72rem; color: var(--text-sub); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;}
+
+    .btn { display: block; width: 100%; border: none; border-radius: 12px; padding: 14px; font-size: 0.95rem; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .btn-quick { background: var(--primary-gradient); color: #0b1121; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3); }
+    .btn-quick:active { transform: scale(0.98); }
+    .btn-outline { background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); color: var(--text-sub); margin-bottom: 8px; }
+    
+    .timer-display { font-size: 3.5rem; font-weight: 900; text-align: center; font-variant-numeric: tabular-nums; color: #38bdf8; margin: 15px 0; text-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+    
+    .timer-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .timer-controls .full-width { grid-column: span 2; background: #f43f5e; color: white; border: none; box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3); }
+    
+    .btn-timer { padding: 14px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; border: none;}
+    .btn-start { background: var(--primary-gradient); color: #0b1121; box-shadow: 0 4px 15px rgba(0, 230, 118, 0.4); }
+    .btn-start:active { transform: scale(0.96); }
+    .btn-reset { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; }
+    .btn-reset:active { background: #0f172a; }
+
+    .log-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--card-border); }
+    .log-item:last-child { border-bottom: none; }
+    .log-date { font-size: 0.9rem; font-weight: 700; color: #e2e8f0; }
+    .log-sub { font-size: 0.75rem; color: var(--text-sub); margin-top: 4px; }
+    .log-badge { font-size: 0.8rem; background: rgba(0, 230, 118, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-weight: 800; }
+    .action-icons { display: flex; gap: 10px; align-items: center; }
+    .icon-btn { color: #64748b; background: rgba(255,255,255,0.05); border: none; font-size: 1rem; cursor: pointer; padding: 6px; border-radius: 6px; transition: background 0.2s; }
+    .icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff;}
+
+    .chart-container { position: relative; height: 220px; width: 100%; margin-top: 10px;}
+
+    .shoe-bar-container { width: 100%; background: #0f172a; border-radius: 8px; height: 10px; margin-top: 12px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); }
+    .shoe-bar-fill { height: 100%; background: linear-gradient(90deg, #00e676, #f59e0b); width: 0%; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(0,230,118,0.5);}
+    
+    .badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
+    .badge-item { background: rgba(15, 23, 42, 0.5); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 8px; text-align: center; opacity: 0.4; filter: grayscale(100%); transition: all 0.4s; }
+    .badge-item.achieved { opacity: 1; filter: grayscale(0%); border-color: rgba(0, 230, 118, 0.5); background: rgba(0, 230, 118, 0.05); box-shadow: 0 4px 15px rgba(0, 230, 118, 0.1); }
+    .badge-icon { font-size: 2rem; margin-bottom: 6px; }
+    .badge-name { font-size: 0.75rem; font-weight: 800; color: var(--text); }
+    .badge-desc { font-size: 0.65rem; color: var(--text-sub); margin-top: 4px; }
+
+    #shareCardWrapper { position: absolute; top: -9999px; left: -9999px; }
+    .share-card { width: 400px; background: linear-gradient(145deg, #151e2f, #0b1121); border: 1px solid #233045; padding: 30px; border-radius: 20px; color: white; text-align: center; box-sizing: border-box; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    .share-card-title { font-size: 1.3rem; font-weight: 900; color: #00e676; margin-bottom: 20px; letter-spacing: 1px; }
+    .share-stats { display: flex; justify-content: space-around; margin-bottom: 25px; }
+    .share-stat { text-align: center; }
+    .share-stat-val { font-size: 2.2rem; font-weight: 900; color: #f8fafc; text-shadow: 0 2px 10px rgba(255,255,255,0.2); }
+    .share-stat-lbl { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; font-weight: 700;}
+    .share-quote { font-size: 1rem; font-style: italic; color: #f59e0b; padding: 18px; background: rgba(0,0,0,0.3); border-left: 4px solid #f59e0b; border-radius: 10px; text-align: left; line-height: 1.5; margin-bottom: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);}
+    .share-footer { font-size: 0.8rem; color: #64748b; margin-top: 15px; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+    .modal.active { display: flex; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); width: 100%; max-width: 400px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.85rem; color: var(--text-sub); margin-bottom: 6px; font-weight: 600;}
+    .form-group input { width: 100%; padding: 12px; background: #0b1121; border: 1px solid var(--card-border); border-radius: 10px; color: white; font-size: 1rem; transition: border 0.3s;}
+    .form-group input:focus { outline: none; border-color: var(--primary); }
+    .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+    #previewImage { max-width: 100%; border-radius: 12px; margin-bottom: 20px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🏃‍♂️ RUN 5AM TRACKER</h1>
+    <p>Duy trì kỷ luật • Khỏe mạnh mỗi ngày</p>
+  </header>
+
+  <div class="stats-grid">
+    <div class="stat-box"><div class="stat-val" id="streakVal">0</div><div class="stat-lbl">🔥 Chuỗi ngày</div></div>
+    <div class="stat-box"><div class="stat-val" id="totalKmVal">0</div><div class="stat-lbl">Km Tổng</div></div>
+    <div class="stat-box"><div class="stat-val" id="totalDaysVal">0</div><div class="stat-lbl">Số buổi</div></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size: 0.85rem; color: var(--text-sub); font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 1px;">⏱️ Thời Gian Chạy</div>
+    <div class="timer-display" id="timerDisplay">00:00</div>
+    <div class="timer-controls">
+      <button class="btn-timer btn-start" id="startBtn" onclick="toggleTimer()">▶ Bắt đầu</button>
+      <button class="btn-timer btn-reset" onclick="resetTimer()">↺ Đặt lại</button>
+      <button class="btn-timer full-width" onclick="finishAndSave()" id="finishBtn" style="display: none;">🏁 Kết thúc & Lưu</button>
+    </div>
+  </div>
+
+  <button class="btn btn-outline" onclick="openModal('entryModal')">📝 Nhập số liệu thủ công / Bổ sung</button>
+
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+      <span style="font-size: 0.95rem; font-weight: 800;">👟 Tuổi thọ đệm giày</span>
+      <span style="font-size: 0.85rem; color: var(--accent); font-weight: 700;" id="shoeText">0 / 500 km</span>
+    </div>
+    <div style="font-size: 0.75rem; color: var(--text-sub);">Đổi giày khi đạt 500km để bảo vệ cột sống và khớp gối.</div>
+    <div class="shoe-bar-container"><div class="shoe-bar-fill" id="shoeBar"></div></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size: 0.95rem; font-weight: 800;">🏅 Bộ sưu tập Huy hiệu</div>
+    <div class="badges-grid">
+      <div class="badge-item" id="badge-1">
+        <div class="badge-icon">🌱</div>
+        <div class="badge-name">Khởi Hành</div>
+        <div class="badge-desc">Buổi chạy đầu tiên</div>
+      </div>
+      <div class="badge-item" id="badge-7">
+        <div class="badge-icon">🔥</div>
+        <div class="badge-name">Kỷ Luật Thép</div>
+        <div class="badge-desc">7 ngày liên tục</div>
+      </div>
+      <div class="badge-item" id="badge-50">
+        <div class="badge-icon">🦅</div>
+        <div class="badge-name">Bền Bỉ</div>
+        <div class="badge-desc">Tích lũy 50 KM</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size: 0.95rem; font-weight: 800; margin-bottom: 10px;">📈 Biểu đồ thời gian hoàn thành (Phút)</div>
+    <div class="chart-container"><canvas id="timeChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">Lịch sử gần đây</div>
+    <div id="logList"></div>
+  </div>
+
+  <div style="text-align: center; margin: 20px 0; padding-top: 15px; border-top: 1px solid var(--card-border);">
+    <button onclick="exportData()" style="background:none; border:none; color: var(--text-sub); font-size: 0.85rem; cursor:pointer; text-decoration: underline; margin-right: 20px; font-weight: 600;">📥 Xuất dữ liệu lên Drive/Zalo</button>
+    <button onclick="document.getElementById('importFile').click()" style="background:none; border:none; color: var(--text-sub); font-size: 0.85rem; cursor:pointer; text-decoration: underline; font-weight: 600;">📤 Khôi phục dữ liệu</button>
+    <input type="file" id="importFile" style="display:none" onchange="importData(event)" accept=".json">
+  </div>
+
+  <div class="modal" id="entryModal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 18px; font-size: 1.2rem; font-weight: 800;">Nhập buổi chạy</h3>
+      <div class="form-group"><label>Ngày chạy</label><input type="date" id="inputDate"></div>
+      <div class="form-group"><label>Quãng đường (km)</label><input type="number" step="0.1" id="inputKm" value="3.0"></div>
+      <div class="form-group"><label>Thời gian (phút)</label><input type="number" step="0.1" id="inputMin" value="40"></div>
+      <div class="form-group"><label>Ghi chú</label><input type="text" id="inputNote" placeholder="Ví dụ: Hoàn thành tốt..."></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" style="margin:0;" onclick="closeModal('entryModal')">Hủy</button>
+        <button class="btn btn-quick" style="margin:0;" onclick="saveCustomEntry()">Lưu lại</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="shareModal">
+    <div class="modal-content" style="text-align: center;">
+      <h3 style="margin-bottom: 18px; font-size: 1.2rem; font-weight: 800;">Ảnh chia sẻ của bạn</h3>
+      <img id="previewImage" alt="Share Card">
+      <div class="modal-actions">
+        <button class="btn btn-outline" style="margin:0;" onclick="closeModal('shareModal')">Đóng</button>
+        <button class="btn btn-quick" style="margin:0;" id="downloadBtn" onclick="downloadImage()">Tải Ảnh Về</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="shareCardWrapper">
+    <div class="share-card" id="shareCardLayout">
+      <div class="share-card-title">RUN 5AM TRACKER</div>
+      <div style="font-size: 0.95rem; color: #94a3b8; font-weight: 600; margin-bottom: 25px;" id="shareDate">Ngày: --</div>
+      <div class="share-stats">
+        <div class="share-stat">
+          <div class="share-stat-val" id="shareKm">3.0</div>
+          <div class="share-stat-lbl">Kilometers</div>
+        </div>
+        <div class="share-stat">
+          <div class="share-stat-val" id="shareTime">40:00</div>
+          <div class="share-stat-lbl">Time</div>
+        </div>
+        <div class="share-stat">
+          <div class="share-stat-val" id="sharePace">13:20</div>
+          <div class="share-stat-lbl">Pace (/km)</div>
+        </div>
+      </div>
+      <div class="share-quote" id="shareQuote">"Hành trình vạn dặm bắt đầu từ một bước chân." - Lão Tử</div>
+      <div class="share-footer">Bắt đầu ngày mới với năng lượng tĩnh tại.</div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'run5am_logs';
+    let logs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    let myChart = null;
+
+    const quotes = [
+      "Kỷ luật là chiếc cầu nối giữa mục tiêu và thành tựu. - Jim Rohn",
+      "Động lực giúp bạn bắt đầu, thói quen giúp bạn tiếp tục. - Jim Ryun",
+      "Sự bền bỉ hôm nay là nền tảng vững chắc của ngày mai.",
+      "Không có con đường tắt đến bất kỳ nơi nào đáng giá. - Beverly Sills",
+      "Thành công là tổng hòa của những nỗ lực nhỏ được lặp đi lặp lại mỗi ngày. - Robert Collier",
+      "Mỗi bước chạy là một lần bạn chiến thắng sự lười biếng của bản thân.",
+      "Chất lượng cuộc sống được quyết định bởi chất lượng của những thói quen.",
+      "Đừng đếm những ngày bạn chạy, hãy làm cho những ngày chạy đếm xỉa đến sự thay đổi của bạn.",
+      "Kỷ luật bản thân là tự do đích thực.",
+      "Nếu bạn không thể bay, hãy chạy. Dù làm gì, hãy cứ tiến lên. - MLK Jr.",
+      "Hành trình vạn dặm bắt đầu từ một bước chân. - Lão Tử",
+      "Tâm tĩnh lặng, bước chân vững vàng. - Thiền Ngữ",
+      "Hãy chạy bằng đôi chân, thở bằng buồng phổi, và lắng nghe bằng trái tim.",
+      "Mỗi bước chân nâng sự tỉnh thức, mỗi hơi thở nuôi dưỡng bình an. - Thích Nhất Hạnh",
+      "Hiện tại là kho báu duy nhất mà bạn có. Hãy trân trọng từng nhịp thở lúc 5h sáng.",
+      "Đi chậm lại, thở sâu hơn, và mỉm cười với chính mình.",
+      "Thiên nhiên buổi sáng là liều thuốc chữa lành mọi mệt mỏi của ngày hôm qua.",
+      "Chạy bộ không phải là chạy trốn, mà là chạy về phía sự tĩnh tại trong tâm hồn.",
+      "Đừng vội vã. Không có đích đến nào quan trọng bằng chính sự trải nghiệm trên đường đi.",
+      "Hòa mình vào nhịp độ của thiên nhiên, bí mật của nó là sự kiên nhẫn. - Ralph Waldo Emerson",
+      "Chúng ta chịu đau khổ trong trí tưởng tượng nhiều hơn trong thực tế. - Seneca",
+      "Không phải những điều xảy ra làm chúng ta tổn thương, mà là cách chúng ta phản ứng. - Epictetus",
+      "Trở ngại là con đường. Cái cản trở hành động sẽ thúc đẩy hành động. - Marcus Aurelius",
+      "Sức mạnh không đến từ thể chất. Nó đến từ ý chí bất khuất. - Mahatma Gandhi",
+      "Hãy làm chủ buổi sáng của bạn, và bạn sẽ làm chủ cả ngày hôm đó.",
+      "Giọt mồ hôi rơi xuống là những yếu đuối đang rời khỏi cơ thể.",
+      "Bạn không thể kiểm soát thời tiết, nhưng bạn có thể kiểm soát việc xỏ giày ra khỏi cửa.",
+      "Chịu đựng gian khổ rèn luyện tâm trí, giống như chạy bộ rèn luyện cơ bắp.",
+      "Người chinh phục được chính mình còn vĩ đại hơn người chinh phục được cả thế giới.",
+      "Chấp nhận sự không thoải mái hôm nay để đổi lấy sự mạnh mẽ ngày mai.",
+      "Phép màu không phải là tôi đã kết thúc, mà là tôi đã can đảm bắt đầu. - John Bingham",
+      "Một buổi chạy buổi sáng giống như việc ăn sáng cho tâm hồn.",
+      "Chạy bộ dạy cho chúng ta biết mình có thể tiến xa đến mức nào.",
+      "Nếu muốn biết chiến thắng cảm giác như thế nào, hãy thức dậy lúc 5h sáng và hoàn thành mục tiêu.",
+      "Bạn chỉ cách một tâm trạng tốt đúng một buổi chạy.",
+      "Hãy để đôi chân làm việc, và tâm trí được nghỉ ngơi.",
+      "Nỗi đau của kỷ luật bao giờ cũng nhẹ hơn nỗi đau của sự hối tiếc.",
+      "Đừng chờ đợi cảm hứng, hãy tạo ra nó bằng cách bắt đầu.",
+      "Cơ thể bạn có thể chịu đựng được nhiều hơn bạn tưởng, hãy thuyết phục tâm trí tin vào điều đó.",
+      "Mỗi buổi sáng là một trang giấy trắng. Cùng viết lên đó bằng những bước chân kiên định."
+    ];
+
+    function formatDateVN(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function getTodayString() { return new Date().toISOString().split('T')[0]; }
+
+    function calculateStreak() {
+      if (logs.length === 0) return 0;
+      const uniqueDates = [...new Set(logs.map(l => l.date))].sort().reverse();
+      const today = getTodayString();
+      const yesterdayDate = new Date(); yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+      const yesterday = yesterdayDate.toISOString().split('T')[0];
+
+      let streak = 0, checkDate = new Date();
+      if (!uniqueDates.includes(today)) {
+        if (!uniqueDates.includes(yesterday)) return 0;
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+      while (true) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        if (uniqueDates.includes(dateStr)) { streak++; checkDate.setDate(checkDate.getDate() - 1); } 
+        else break;
+      }
+      return streak;
+    }
+
+    function updateShoeLifespan(totalKm) {
+      const maxKm = 500;
+      const pct = Math.min((totalKm / maxKm) * 100, 100);
+      document.getElementById('shoeText').textContent = `${totalKm.toFixed(1)} / ${maxKm} km`;
+      const bar = document.getElementById('shoeBar');
+      bar.style.width = `${pct}%`;
+      if (pct > 90) bar.style.background = '#ef4444';
+      else bar.style.background = 'linear-gradient(90deg, #00e676, #f59e0b)';
+    }
+
+    function updateBadges(totalDays, totalKm, streak) {
+      if (totalDays >= 1) document.getElementById('badge-1').classList.add('achieved');
+      else document.getElementById('badge-1').classList.remove('achieved');
+
+      if (streak >= 7) document.getElementById('badge-7').classList.add('achieved');
+      else document.getElementById('badge-7').classList.remove('achieved');
+
+      if (totalKm >= 50) document.getElementById('badge-50').classList.add('achieved');
+      else document.getElementById('badge-50').classList.remove('achieved');
+    }
+
+    function renderChart() {
+      const recentLogs = logs.slice(0, 7).reverse();
+      const labels = recentLogs.map(l => { const p = l.date.split('-'); return `${p[2]}/${p[1]}`; }); 
+      const dataPoints = recentLogs.map(l => l.minutes);
+
+      const ctx = document.getElementById('timeChart').getContext('2d');
+      if (myChart) myChart.destroy(); 
+      
+      let gradientFill = ctx.createLinearGradient(0, 0, 0, 220);
+      gradientFill.addColorStop(0, 'rgba(56, 189, 248, 0.4)');
+      gradientFill.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Thời gian (Phút)', 
+            data: dataPoints, 
+            borderColor: '#38bdf8', 
+            backgroundColor: gradientFill,
+            borderWidth: 3, 
+            pointBackgroundColor: '#f59e0b', 
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5, 
+            fill: true, 
+            tension: 0.4 
+          }]
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { legend: { display: false } },
+          scales: { 
+            y: { grid: { color: '#233045', drawBorder: false }, ticks: { color: '#94a3b8', font: {weight: 600} } }, 
+            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: {weight: 600} } } 
+          },
+          layout: { padding: { top: 10, bottom: 10 } }
+        }
+      });
+    }
+
+    function updateUI() {
+      const streak = calculateStreak();
+      const totalKm = logs.reduce((sum, item) => sum + parseFloat(item.km || 0), 0);
+      const totalDays = logs.length;
+
+      document.getElementById('streakVal').textContent = streak;
+      document.getElementById('totalKmVal').textContent = totalKm.toFixed(1);
+      document.getElementById('totalDaysVal').textContent = totalDays;
+
+      updateShoeLifespan(totalKm);
+      updateBadges(totalDays, totalKm, streak);
+
+      const logListEl = document.getElementById('logList');
+      logListEl.innerHTML = logs.length === 0 ? '<div style="text-align:center; color: var(--text-sub); font-size: 0.9rem; padding: 10px;">Chưa có dữ liệu chạy.</div>' : '';
+
+      logs.slice(0, 7).forEach((item, index) => {
+        const m = Math.floor(item.minutes);
+        const s = Math.round((item.minutes - m) * 60);
+        const timeStr = s > 0 ? `${m}p ${s}s` : `${m}p`;
+
+        const row = document.createElement('div');
+        row.className = 'log-item';
+        row.innerHTML = `
+          <div><div class="log-date">${formatDateVN(item.date)}</div><div class="log-sub">⏱️ ${timeStr} ${item.note ? '• ' + item.note : ''}</div></div>
+          <div class="action-icons">
+            <span class="log-badge">${item.km} km</span>
+            <button class="icon-btn" onclick="generateShareCard(${index})" title="Tạo ảnh">📸</button>
+            <button class="icon-btn" onclick="deleteLog(${index})" title="Xóa">✕</button>
+          </div>
+        `;
+        logListEl.appendChild(row);
+      });
+
+      if(logs.length > 0) renderChart();
+    }
+
+    function openModal(id) {
+      if(id === 'entryModal') document.getElementById('inputDate').value = getTodayString();
+      document.getElementById(id).classList.add('active');
+    }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    function saveCustomEntry() {
+      const date = document.getElementById('inputDate').value;
+      const km = parseFloat(document.getElementById('inputKm').value) || 3.0;
+      const minutes = parseFloat(document.getElementById('inputMin').value) || 40.0;
+      const note = document.getElementById('inputNote').value.trim();
+
+      if (!date) return alert('Vui lòng chọn ngày!');
+      logs = logs.filter(l => l.date !== date);
+      logs.unshift({ date, km, minutes, note });
+      logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+      updateUI(); closeModal('entryModal');
+    }
+
+    let elapsedSeconds = 0, timerInterval = null;
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60); const s = secs % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+    
+    function toggleTimer() {
+      const btn = document.getElementById('startBtn'), finishBtn = document.getElementById('finishBtn');
+      if (timerInterval) { 
+        clearInterval(timerInterval); 
+        timerInterval = null; 
+        btn.textContent = '▶ Tiếp tục'; 
+        btn.style.background = 'var(--primary-gradient)';
+        btn.style.color = '#0b1121';
+      } else {
+        btn.textContent = '⏸ Tạm dừng'; 
+        btn.style.background = '#f59e0b'; 
+        btn.style.color = '#fff';
+        finishBtn.style.display = 'block'; 
+        timerInterval = setInterval(() => { elapsedSeconds++; document.getElementById('timerDisplay').textContent = formatTime(elapsedSeconds); }, 1000);
+      }
+    }
+    
+    function resetTimer() {
+      clearInterval(timerInterval); timerInterval = null; elapsedSeconds = 0;
+      document.getElementById('timerDisplay').textContent = "00:00";
+      const btn = document.getElementById('startBtn');
+      btn.textContent = '▶ Bắt đầu'; 
+      btn.style.background = 'var(--primary-gradient)';
+      btn.style.color = '#0b1121';
+      document.getElementById('finishBtn').style.display = 'none';
+    }
+    
+    function finishAndSave() {
+      if (elapsedSeconds === 0) return;
+      const today = getTodayString();
+      if (logs.some(l => l.date === today) && !confirm('Cập nhật đè lên dữ liệu hôm nay nhé?')) return;
+      logs = logs.filter(l => l.date !== today);
+      logs.unshift({ date: today, km: 3.0, minutes: +(elapsedSeconds / 60).toFixed(2), note: 'Hoàn thành' });
+      logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(logs)); resetTimer(); updateUI(); alert('Đã lưu dữ liệu thành công!');
+    }
+    
+    function deleteLog(index) {
+      if (confirm('Xóa buổi chạy này?')) { logs.splice(index, 1); localStorage.setItem(STORAGE_KEY, JSON.stringify(logs)); updateUI(); }
+    }
+
+    let currentImgData = null;
+    function generateShareCard(index) {
+      const item = logs[index];
+      const m = Math.floor(item.minutes);
+      const s = Math.round((item.minutes - m) * 60);
+      const paceDec = item.minutes / item.km;
+      const paceM = Math.floor(paceDec);
+      const paceS = Math.round((paceDec - paceM) * 60);
+
+      document.getElementById('shareDate').textContent = `Ngày: ${formatDateVN(item.date)}`;
+      document.getElementById('shareKm').textContent = parseFloat(item.km).toFixed(1);
+      document.getElementById('shareTime').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      document.getElementById('sharePace').textContent = `${paceM}:${String(paceS).padStart(2,'0')}`;
+      
+      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+      document.getElementById('shareQuote').textContent = `"${randomQuote}"`;
+
+      const card = document.getElementById('shareCardLayout');
+      
+      html2canvas(card, { scale: 2, backgroundColor: null }).then(canvas => {
+        currentImgData = canvas.toDataURL("image/png");
+        const preview = document.getElementById('previewImage');
+        preview.src = currentImgData;
+        preview.style.display = 'block';
+        document.getElementById('downloadBtn').textContent = 'Tải Ảnh Về';
+        openModal('shareModal');
+      });
+    }
+
+    function downloadImage() {
+      if(!currentImgData) return;
+      const link = document.createElement('a');
+      const safeDate = getTodayString().replace(/-/g, '');
+      link.download = `Run5AM_${safeDate}.png`;
+      link.href = currentImgData;
+      link.click();
+      document.getElementById('downloadBtn').textContent = 'Đã Tải ✔';
+    }
+
+    async function exportData() {
+      try {
+        const dataStr = JSON.stringify(logs, null, 2);
+        const safeDate = getTodayString().replace(/-/g, '');
+        const fileName = `Run5AM_Backup_${safeDate}.json`;
+
+        const blob = new Blob([dataStr], { type: 'application/json' });
+
+        if (navigator.canShare && navigator.share) {
+          const file = new File([blob], fileName, { type: 'application/json' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Sao lưu Run 5AM',
+              text: 'Dữ liệu sao lưu chạy bộ 5h sáng'
+            });
+            return;
+          }
+        }
+
+        const url = URL.createObjectURL(blob);
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.href = url;
+        downloadAnchor.download = fileName;
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        document.body.removeChild(downloadAnchor);
+        URL.revokeObjectURL(url);
+        
+        alert('Đã tải file sao lưu về máy (Kiểm tra thư mục Tải xuống/Downloads)!');
+      } catch (error) {
+        console.error('Lỗi xuất dữ liệu:', error);
+        alert('Đã hủy chia sẻ hoặc trình duyệt không hỗ trợ thao tác này.');
+      }
+    }
+
+    function importData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (Array.isArray(imported)) {
+            logs = imported;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+            updateUI();
+            alert('Đã khôi phục dữ liệu thành công!');
+          }
+        } catch (err) { alert('File sao lưu không hợp lệ!'); }
+      };
+      reader.readAsText(file);
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
